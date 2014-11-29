@@ -96,3 +96,15 @@ ks.test(x = loss$loss, y = pweibull, weibull.coef[[1]], weibull.coef[[2]])$p.val
 ks.test(x = loss$loss, y = ppareto, pareto.coef[[1]], pareto.coef[[2]])$p.value
 
 # lognorm is the best
+
+#_________________________ALAE:
+# the data is not censored, so we can use fitdistr
+coef1 <- fitdist(data = loss$alae, distr = plnorm)
+ks.test(loss$alae, plnorm, coef1$estimate[[1]], coef1$estimate[[2]])$p.value
+
+coef2 <- fitdist(data = loss$alae, distr = pweibull)
+ks.test(loss$alae, pweibull, coef2$estimate[[1]], coef2$estimate[[2]])$p.value
+
+coef3 <- fitdist(data = loss$alae, distr = ppareto, 
+                 start = list(scale = 10, shape = 10))
+ks.test(loss$alae, ppareto, coef3$estimate[[1]], coef3$estimate[[2]])$p.value
