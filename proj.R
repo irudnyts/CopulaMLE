@@ -21,8 +21,7 @@ density <- function(arg) {
 }
 
 optim(par = c(0.1, 1, 1), fn = density, control=list(fnscale=-1),
-      lower = c(0,1,1), upper = c(1,10,20))
-
+      lower = c(0,1,1), upper = c(1, Inf, Inf))
 #_________________________________Frank copula__________________________________
 data <-  I.2d * rCopula(n = n, copula = frankCopula(param = a, dim = 2)) +
     (1 - I.2d) * rCopula(n = n, copula = frankCopula(param = b, dim = 2))
@@ -63,15 +62,21 @@ optim(par = c(0.1, 1, 1), fn = density, control=list(fnscale=-1),
       lower = c(0,1,1), upper = c(1,10,20))
 #_______________________________General function________________________________
 
-# pmle <- function(sample, copula1, copula2) {
-#     
-#     density <- function(param) {
-#         sum(log(arg[1] * dCopula(u = data, copula = 
-#                                      claytonCopula(param = arg[2], dim = 2))
-#                 + (1-arg[1])*dCopula(u = data, copula = 
-#                                     gumbelCopula(param = arg[3], dim = 2))))
-#     }
-# }
+pmle <- function(sample, copula1, copula2, lower, upper) {
+    
+    density <- function(arg) {
+        sum(log(arg[1] * dCopula(u = data, copula = 
+                                     copula1(param = arg[2], dim = 2))
+                + (1-arg[1])*dCopula(u = data, copula = 
+                                     copula2(param = arg[3], dim = 2))))
+    }
+    optim(par = c(0.1, 1, 1), fn = density, control=list(fnscale=-1),
+          lower = c(0, lower), upper = c(1, upper))
+}
+
+pmle(sample = data, copula1 = gumbelCopula, copula2 = gumbelCopula, 
+     lower = c(1, 1), upper = c(Inf, Inf))
+
 
 
 # testing fucntions in R
