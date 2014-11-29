@@ -2,103 +2,103 @@
 library("copula")
 set.seed(1)
 
-n <- 1000
-p <- 0.3
-a <- 5
-b <- 10
-I <- rbinom(n = n, size = 1, prob = p)
-I.2d <- matrix(rep(I, 2), ncol = 2, byrow = F)
+n <- 1000 # number of observation
+p <- 0.3 # mixing parameter
+a <- 5 # parameter of 1st copula
+b <- 10 # parameter of second copula
+I <- rbinom(n = n, size = 1, prob = p) # Bernoili r.v.
 
 #_________________________________Gumbel copula_________________________________
-data <-  I.2d * rCopula(n = n, copula = gumbelCopula(param = a, dim = 2)) +
-    (1 - I.2d) * rCopula(n = n, copula = gumbelCopula(param = b, dim = 2))
+data <-  I * rCopula(n = n, copula = gumbelCopula(param = a, dim = 2)) +
+    (1 - I) * rCopula(n = n, copula = gumbelCopula(param = b, dim = 2))
 
 density <- function(arg) {
     sum(log(arg[1] * dCopula(u = data, copula = 
                                  gumbelCopula(param = arg[2], dim = 2))
-         + (1-arg[1])*dCopula(u = data, copula = 
+         + (1 - arg[1]) * dCopula(u = data, copula = 
                                  gumbelCopula(param = arg[3], dim = 2))))
 }
 
-optim(par = c(0.1, 1, 1), fn = density, control=list(fnscale=-1),
+optim(par = c(0, 1, 1), fn = density, control = list(fnscale = -1),
       lower = c(0,1,1), upper = c(1, Inf, Inf))
+
 #_________________________________Frank copula__________________________________
-data <-  I.2d * rCopula(n = n, copula = frankCopula(param = a, dim = 2)) +
-    (1 - I.2d) * rCopula(n = n, copula = frankCopula(param = b, dim = 2))
+data <-  I * rCopula(n = n, copula = frankCopula(param = a, dim = 2)) +
+    (1 - I) * rCopula(n = n, copula = frankCopula(param = b, dim = 2))
 
 density <- function(arg) {
     sum(log(arg[1] * dCopula(u = data, copula = 
                                  frankCopula(param = arg[2], dim = 2))
-            + (1-arg[1])*dCopula(u = data, copula = 
+            + (1 - arg[1]) * dCopula(u = data, copula = 
                                      frankCopula(param = arg[3], dim = 2))))
 }
 
-optim(par = c(0.1, 1, 1), fn = density, control=list(fnscale=-1),
-      lower = c(0,1,1), upper = c(1,10,20))
+optim(par = c(0.1, 1, 1), fn = density, control = list(fnscale = -1),
+      lower = c(0,1,1), upper = c(1, Inf, Inf))
+
 #________________________________Clayton copula_________________________________
-data <-  I.2d * rCopula(n = n, copula = claytonCopula(param = a, dim = 2)) +
-    (1 - I.2d) * rCopula(n = n, copula = claytonCopula(param = b, dim = 2))
+data <-  I * rCopula(n = n, copula = claytonCopula(param = a, dim = 2)) +
+    (1 - I) * rCopula(n = n, copula = claytonCopula(param = b, dim = 2))
 
 density <- function(arg) {
     sum(log(arg[1] * dCopula(u = data, copula = 
                                  claytonCopula(param = arg[2], dim = 2))
-            + (1-arg[1])*dCopula(u = data, copula = 
+            + (1 - arg[1]) * dCopula(u = data, copula = 
                                      claytonCopula(param = arg[3], dim = 2))))
 }
 
-optim(par = c(0.1, 1, 1), fn = density, control=list(fnscale=-1),
-      lower = c(0,1,1), upper = c(1,10,20))
+optim(par = c(0.1, 1, 1), fn = density, control = list(fnscale = -1),
+      lower = c(0, 1, 1), upper = c(1, Inf, Inf))
 #________________________________Mixed 2 copulas________________________________
-data <-  I.2d * rCopula(n = n, copula = claytonCopula(param = a, dim = 2)) +
-    (1 - I.2d) * rCopula(n = n, copula = gumbelCopula(param = b, dim = 2))
+data <-  I * rCopula(n = n, copula = claytonCopula(param = a, dim = 2)) +
+    (1 - I) * rCopula(n = n, copula = gumbelCopula(param = b, dim = 2))
 
 density <- function(arg) {
     sum(log(arg[1] * dCopula(u = data, copula = 
                                  claytonCopula(param = arg[2], dim = 2))
-            + (1-arg[1])*dCopula(u = data, copula = 
+            + (1 - arg[1]) * dCopula(u = data, copula = 
                                      gumbelCopula(param = arg[3], dim = 2))))
 }
-optim(par = c(0.1, 1, 1), fn = density, control=list(fnscale=-1),
-      lower = c(0,1,1), upper = c(1,10,20))
+optim(par = c(0.1, 1, 1), fn = density, control = list(fnscale = -1),
+      lower = c(0,1,1), upper = c(1, Inf, Inf))
 #_______________________________General function________________________________
 
-pmle <- function(sample, copula1, copula2, lower, upper) {
+mle <- function(sample, copula1, copula2, lower, upper) {
+    # Maximum likelihood estimator for mixed copula
+    #
+    # Args:
+    #   sample: a matrix of 2-dimenssional random sample from copula (i.e.
+    #       values between 0 and 1, columns are univariate random sample from
+    #       uniform distribution)
+    #   copula1: the class of the first copula (gumbelCopula etc.)
+    #   copula2: the class of the second copula
+    #   lower: the vector of lower boundaries of parameters for copula1 and
+    #       copula2 respectivly
+    #   upper: the vector of upper boundaries of parameters for copula1 and
+    #       copula2 respectivly
+    #
+    # Returns:
+    #   the vector of parameters p, alpha and beta respectivly
     
+    # definition of mixed copula density fucntion
     density <- function(arg) {
         sum(log(arg[1] * dCopula(u = data, copula = 
                                      copula1(param = arg[2], dim = 2))
-                + (1-arg[1])*dCopula(u = data, copula = 
+                + (1-arg[1]) * dCopula(u = data, copula = 
                                      copula2(param = arg[3], dim = 2))))
     }
-    optim(par = c(0.1, 1, 1), fn = density, control=list(fnscale=-1),
-          lower = c(0, lower), upper = c(1, upper))
+    # perform the optimization and subset estimated parameters
+    optim(par = c(0, 1, 1), fn = density, control = list(fnscale = -1),
+          lower = c(0, lower), upper = c(1, upper))$par
 }
 
-pmle(sample = data, copula1 = gumbelCopula, copula2 = gumbelCopula, 
+# example Gumbel-Gumbel
+data <-  I * rCopula(n = n, copula = gumbelCopula(param = a, dim = 2)) +
+    (1 - I) * rCopula(n = n, copula = gumbelCopula(param = b, dim = 2))
+mle(sample = data, copula1 = gumbelCopula, copula2 = gumbelCopula, 
      lower = c(1, 1), upper = c(Inf, Inf))
-
-
-
-# testing fucntions in R
-# # max likelyhood estimator
-# x <- rpois(n = 1000, lambda = 2)
-# optimize(f = LL, interval = c(0,200), maximum = TRUE)
-# LL <- function(lambda) {
-#         sum(dnorm(x, lambda, log = TRUE))
-# }
-# 
-# # test optimizer for 2 dim fnct
-# BB <- function(x) {
-#     x[1] * x[2]
-# }
-# optim(par = c(1,1),fn = BB, control=list(fnscale=-1))
-# 
-# # likelyhood for simple copula
-# x <- rCopula(n = 10000, copula = gumbelCopula(param = 2, dim = 2))
-# 
-# LL <- function(lam) {
-#     sum(dCopula(u = x, copula = gumbelCopula(param = lam, dim = 2), log = TRUE))
-# }
-# 
-# optimize(f = LL, maximum = TRUE, interval = c(0, 10))
-
+# example Frank-Gumbel
+data <-  I * rCopula(n = n, copula = frankCopula(param = a, dim = 2)) +
+    (1 - I) * rCopula(n = n, copula = gumbelCopula(param = b, dim = 2))
+mle(sample = data, copula1 = frankCopula, copula2 = gumbelCopula, 
+    lower = c(1, 1), upper = c(Inf, Inf))
