@@ -108,3 +108,10 @@ ks.test(loss$alae, pweibull, coef2$estimate[[1]], coef2$estimate[[2]])$p.value
 coef3 <- fitdist(data = loss$alae, distr = ppareto, 
                  start = list(scale = 10, shape = 10))
 ks.test(loss$alae, ppareto, coef3$estimate[[1]], coef3$estimate[[2]])$p.value
+
+# lognorm as well is the best
+
+# TODO:
+# 1. hist + qqplot
+# 2. ecdf vs lognorm cdf 
+# 3. copula mle
