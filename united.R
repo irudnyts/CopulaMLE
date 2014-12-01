@@ -72,6 +72,21 @@ loss.pareto <- fitAndTest(sample = loss$loss, limit = loss$limit,
                           censored = loss$censored,
                           pdf = dpareto, cdf = ppareto, param1 = 10, 
                           param2 = 150000)
+# Histogram
+hist(loss$loss, breaks = 400, freq = F, xlim = c(0, 250000),
+     ylim = c(0, 0.00009),
+     main = "Histofram and fitted densities for loss", xlab = "loss")
+lines(seq(from = 10, to = 250000, by = 50),
+      dlnorm(x = seq(from = 10, to = 250000, by = 50),
+             loss.lnorm[[2]][[1]], loss.lnorm[[2]][[2]]), col = 2)
+lines(seq(from = 10, to = 250000, by = 50),
+      dweibull(x = seq(from = 10, to = 250000, by = 50),
+               loss.weibull[[2]][[1]], loss.weibull[[2]][[2]]), col = 3)
+lines(seq(from = 10, to = 250000, by = 50),
+      dpareto(x = seq(from = 10, to = 250000, by = 50),
+              loss.pareto[[2]][[1]], loss.pareto[[2]][[2]]), col = 4)
+legend("topright", legend  = c("Histogram","Lognormal", "Weibull", "Pareto"),
+       col = 1:4, lwd = rep(1, 4))
 
 #_________________________ALAE:
 
@@ -91,12 +106,40 @@ alae.pareto <- fitAndTest(sample = loss$alae, limit = rep(-99, nrow(loss)),
                            pdf = dpareto, cdf = ppareto,
                            param1 = 10, param2 = 10)
 
+# Histogram
+hist(loss$alae, breaks = 200, freq = F, ylim = c(0, 0.0002), xlim = c(0, 40000),
+     main = "Histofram and fitted densities for alae", xlab = "alae")
+lines(seq(from = 10, to = 501863, by = 50),
+      dlnorm(x = seq(from = 10, to = 501863, by = 50),
+             alae.lnorm[[2]][[1]], alae.lnorm[[2]][[2]]), col = 2)
+lines(seq(from = 10, to = 501863, by = 50),
+      dweibull(x = seq(from = 10, to = 501863, by = 50),
+               alae.weibull[[2]][[1]], alae.weibull[[2]][[2]]), col = 3)
+lines(seq(from = 10, to = 501863, by = 50),
+      dpareto(x = seq(from = 10, to = 501863, by = 50),
+              alae.pareto[[2]][[1]], alae.pareto[[2]][[2]]), col = 4)
+legend("topright", legend  = c("Histogram","Lognormal", "Weibull", "Pareto"),
+       col = 1:4, lwd = rep(1, 4))
+
 #_________________________Empirical cdf:
 loss.ecdf <- ecdf(loss$loss)
 alae.ecdf <- ecdf(loss$alae)
 
 #________________________________Copula fitting_________________________________
 #_________________________Pseudo sample (parametrically):
+
+pseudo.sample.parametric <- data.frame(
+    loss = plnorm(loss$loss, loss.lnorm[[2]][[1]], loss.lnorm[[2]][[2]]),
+    alae = plnorm(loss$alae, alae.lnorm[[2]][[1]], alae.lnorm[[2]][[2]]))
+
+pseudo.sample.non.parametric <- data.frame(loss = loss.ecdf(loss$loss),
+                                           alae = alae.ecdf(loss$alae))
+
+par(mfrow = c(1,1))
+plot(pseudo.sample.non.parametric$loss, pseudo.sample.non.parametric$alae)
+plot(pseudo.sample.parametric$loss, pseudo.sample.parametric$alae)
+
+
 #_________________________Pseudo sample (non-parametrically):
 
 
