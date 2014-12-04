@@ -93,9 +93,9 @@ copula.mle <- function(sample, copula1, copula2, lower, upper) {
 }
 
 # example Gumbel-Gumbel
-data2 <-  I * rCopula(n = n, copula = gumbelCopula(param = a, dim = 2)) +
+data <-  I * rCopula(n = n, copula = gumbelCopula(param = a, dim = 2)) +
     (1 - I) * rCopula(n = n, copula = gumbelCopula(param = b, dim = 2))
-copula.mle(sample = data2, copula1 = gumbelCopula, copula2 = gumbelCopula, 
+copula.mle(sample = data, copula1 = gumbelCopula, copula2 = gumbelCopula, 
      lower = c(1, 1), upper = c(Inf, Inf))
 # example Frank-Gumbel
 data <-  I * rCopula(n = n, copula = frankCopula(param = a, dim = 2)) +

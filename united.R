@@ -155,8 +155,14 @@ cor(pseudo.sample.non.parametric$loss, pseudo.sample.non.parametric$alae,
 cor(pseudo.sample.non.parametric$loss, pseudo.sample.non.parametric$alae,
     method = c("pearson"))
 
+# all these values are the same. so, for simplicity we will be dealing with
+# only parametric data
+
+# the problem, which may occure, F(max(x)) (of empirical cdf) will give value 1,
+# wich will give the density equals to Inf 
+
 # estimate parameters for particular copulas
-copula.mle <- function(sample, copula1, copula2, lower, upper) {
+copula.mle <- function(sample, copula1, copula2, initial, lower, upper) {
     # Maximum likelihood estimator for mixed copula
     #
     # Args:
@@ -165,9 +171,11 @@ copula.mle <- function(sample, copula1, copula2, lower, upper) {
     #       uniform distribution)
     #   copula1: the class of the first copula (gumbelCopula etc.)
     #   copula2: the class of the second copula
-    #   lower: the vector of lower boundaries of parameters for copula1 and
+    #   intital: the vector of initial values for p, copula1 and copula2
+    #       parameters
+    #   lower: the vector of lower boundaries of parameters for p, copula1 and
     #       copula2 respectivly
-    #   upper: the vector of upper boundaries of parameters for copula1 and
+    #   upper: the vector of upper boundaries of parameters for p, copula1 and
     #       copula2 respectivly
     #
     # Returns:
@@ -181,23 +189,27 @@ copula.mle <- function(sample, copula1, copula2, lower, upper) {
                                            copula2(param = arg[3], dim = 2))))
     }
     # perform the optimization and subset estimated parameters
-    optim(par = c(0, 1, 1), fn = logL, control = list(fnscale = -1),
-          lower = c(0, lower), upper = c(1, upper))$par
+    optim(par = initial, fn = logL, control = list(fnscale = -1),
+          lower = lower, upper = upper)$par
 }
 
 gumbel.gumbel.coef <- copula.mle(sample = as.matrix(pseudo.sample.parametric), 
-                                 copula1 = claytonCopula, copula2 = claytonCopula, 
-                                 lower = c(0,0), upper = c(Inf, Inf))
+                                 copula1 = gumbelCopula, copula2 = gumbelCopula,
+                                 initial = c(0, 1, 1),
+                                 lower = c(0, 1, 1), upper = c(1, Inf, Inf))
 
 n <- 10000 # number of observation
 p <- gumbel.gumbel.coef[1] # mixing parameter
 a <- gumbel.gumbel.coef[2] # parameter of 1st copula
 b <- gumbel.gumbel.coef[3] # parameter of second copula
 I <- rbinom(n = n, size = 1, prob = p) # Bernoili r.v.
-random <- I * rCopula(n = n, copula = claytonCopula(param = a, dim = 2)) +
-    (1 - I) * rCopula(n = n, copula = claytonCopula(param = b, dim = 2))
+random <- I * rCopula(n = n, copula = gumbelCopula(param = a, dim = 2)) +
+    (1 - I) * rCopula(n = n, copula = gumbelCopula(param = b, dim = 2))
 cor(random[ ,1], random[ ,2], method = "kendall")
 
+
+### !!! ecdf gives back value 1, which gives Inf of log likelihood
+### pseudo.sample.non.parametric[1268,]
 
 # TODO:
 # 1. hist + qqplot
