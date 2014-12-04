@@ -82,9 +82,9 @@ copula.mle <- function(sample, copula1, copula2, lower, upper) {
     
     # definition of mixed copula density fucntion
     density <- function(arg) {
-        sum(log(arg[1] * dCopula(u = data, copula = 
+        sum(log(arg[1] * dCopula(u = sample, copula = 
                                      copula1(param = arg[2], dim = 2))
-                + (1-arg[1]) * dCopula(u = data, copula = 
+                + (1-arg[1]) * dCopula(u = sample, copula = 
                                      copula2(param = arg[3], dim = 2))))
     }
     # perform the optimization and subset estimated parameters
@@ -93,9 +93,9 @@ copula.mle <- function(sample, copula1, copula2, lower, upper) {
 }
 
 # example Gumbel-Gumbel
-data <-  I * rCopula(n = n, copula = gumbelCopula(param = a, dim = 2)) +
+data2 <-  I * rCopula(n = n, copula = gumbelCopula(param = a, dim = 2)) +
     (1 - I) * rCopula(n = n, copula = gumbelCopula(param = b, dim = 2))
-copula.mle(sample = data, copula1 = gumbelCopula, copula2 = gumbelCopula, 
+copula.mle(sample = data2, copula1 = gumbelCopula, copula2 = gumbelCopula, 
      lower = c(1, 1), upper = c(Inf, Inf))
 # example Frank-Gumbel
 data <-  I * rCopula(n = n, copula = frankCopula(param = a, dim = 2)) +

@@ -5,7 +5,7 @@ library("fitdistrplus")
 
 data(loss) # load data
 summary(loss) # summary of loss data
-boxplot(loss[,c(1, 2)]) # no use :)
+# boxplot(loss[,c(1, 2)]) # no use :)
 
 sum(loss$censored) # number of censored data
 loss[(loss$loss >= loss$limit), c(1,3)]
@@ -37,7 +37,7 @@ fitAndTest <- function(sample, limit, censored, pdf, cdf, param1, param2) {
     #   1. case for any number of parameters using ...
     #   2. pass as parameters sample, limits and if data censored or not
     
-    density <- function(arg1, arg2) {
+    logL <- function(arg1, arg2) {
         sum <- 0
         for(i in 1:length(sample)) {
             if(censored[i] == 0) {
@@ -51,7 +51,7 @@ fitAndTest <- function(sample, limit, censored, pdf, cdf, param1, param2) {
         sum
     }
     
-    parameters <- mle(minuslogl = density, 
+    parameters <- mle(minuslogl = logL, 
                       start = list(arg1 = param1, arg2 = param2))@coef
     
     list(ks.test(x = sample, y = cdf, parameters[[1]], parameters[[2]]),
@@ -137,6 +137,7 @@ pseudo.sample.non.parametric <- data.frame(loss = loss.ecdf(loss$loss),
 par(mfrow = c(1,2))
 plot(pseudo.sample.non.parametric$loss, pseudo.sample.non.parametric$alae)
 plot(pseudo.sample.parametric$loss, pseudo.sample.parametric$alae)
+par(mfrow = c(1,1))
 
 # estimatiom tau, rho_s, rho for parametric pseudo data
 cor(pseudo.sample.parametric$loss, pseudo.sample.parametric$alae,
@@ -172,30 +173,30 @@ copula.mle <- function(sample, copula1, copula2, lower, upper) {
     # Returns:
     #   the vector of parameters p, alpha and beta respectivly
     
-    # definition of mixed copula density fucntion
-    density <- function(arg) {
-        sum(log(arg[1] * dCopula(u = data, copula = 
+    # definition of mixed copula logL fucntion
+    logL <- function(arg) {
+        sum(log(arg[1] * dCopula(u = sample, copula = 
                                      copula1(param = arg[2], dim = 2))
-                + (1-arg[1]) * dCopula(u = data, copula = 
+                + (1-arg[1]) * dCopula(u = sample, copula = 
                                            copula2(param = arg[3], dim = 2))))
     }
     # perform the optimization and subset estimated parameters
-    optim(par = c(0, 1, 1), fn = density, control = list(fnscale = -1),
+    optim(par = c(0, 1, 1), fn = logL, control = list(fnscale = -1),
           lower = c(0, lower), upper = c(1, upper))$par
 }
 
-gumbel.gumbel.coef <- copula.mle(sample = pseudo.sample.parametric, 
-                                 copula1 = gumbelCopula, copula2 = gumbelCopula, 
-                                 lower = c(1,1), upper = c(Inf, Inf))
+gumbel.gumbel.coef <- copula.mle(sample = as.matrix(pseudo.sample.parametric), 
+                                 copula1 = claytonCopula, copula2 = claytonCopula, 
+                                 lower = c(0,0), upper = c(Inf, Inf))
 
 n <- 10000 # number of observation
 p <- gumbel.gumbel.coef[1] # mixing parameter
 a <- gumbel.gumbel.coef[2] # parameter of 1st copula
 b <- gumbel.gumbel.coef[3] # parameter of second copula
 I <- rbinom(n = n, size = 1, prob = p) # Bernoili r.v.
-random <- I * rCopula(n = n, copula = gumbelCopula(param = a, dim = 2)) +
-    (1 - I) * rCopula(n = n, copula = gumbelCopula(param = b, dim = 2))
-
+random <- I * rCopula(n = n, copula = claytonCopula(param = a, dim = 2)) +
+    (1 - I) * rCopula(n = n, copula = claytonCopula(param = b, dim = 2))
+cor(random[ ,1], random[ ,2], method = "kendall")
 
 
 # TODO:
