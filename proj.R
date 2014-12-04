@@ -63,7 +63,7 @@ optim(par = c(0.1, 1, 1), fn = density, control = list(fnscale = -1),
       lower = c(0,1,1), upper = c(1, Inf, Inf))
 #_______________________________General function________________________________
 
-mle <- function(sample, copula1, copula2, lower, upper) {
+copula.mle <- function(sample, copula1, copula2, lower, upper) {
     # Maximum likelihood estimator for mixed copula
     #
     # Args:
@@ -95,10 +95,10 @@ mle <- function(sample, copula1, copula2, lower, upper) {
 # example Gumbel-Gumbel
 data <-  I * rCopula(n = n, copula = gumbelCopula(param = a, dim = 2)) +
     (1 - I) * rCopula(n = n, copula = gumbelCopula(param = b, dim = 2))
-mle(sample = data, copula1 = gumbelCopula, copula2 = gumbelCopula, 
+copula.mle(sample = data, copula1 = gumbelCopula, copula2 = gumbelCopula, 
      lower = c(1, 1), upper = c(Inf, Inf))
 # example Frank-Gumbel
 data <-  I * rCopula(n = n, copula = frankCopula(param = a, dim = 2)) +
     (1 - I) * rCopula(n = n, copula = gumbelCopula(param = b, dim = 2))
-mle(sample = data, copula1 = frankCopula, copula2 = gumbelCopula, 
+copula.mle(sample = data, copula1 = frankCopula, copula2 = gumbelCopula, 
     lower = c(1, 1), upper = c(Inf, Inf))
