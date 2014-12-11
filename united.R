@@ -3,8 +3,10 @@ library("actuar")
 library("stats4")
 library("fitdistrplus")
 
+options(scipen=999) # disable scientific representation
+
 data(loss) # load data
-summary(loss) # summary of loss data
+# summary(loss) # summary of loss data
 # boxplot(loss[,c(1, 2)]) # no use :)
 
 sum(loss$censored) # number of censored data
@@ -75,7 +77,7 @@ loss.pareto <- fitAndTest(sample = loss$loss, limit = loss$limit,
 # Histogram
 hist(loss$loss, breaks = 400, freq = F, xlim = c(0, 250000),
      ylim = c(0, 0.00009),
-     main = "Histofram and fitted densities for loss", xlab = "loss")
+     main = "Histogram and fitted densities for loss", xlab = "loss")
 lines(seq(from = 10, to = 250000, by = 50),
       dlnorm(x = seq(from = 10, to = 250000, by = 50),
              loss.lnorm[[2]][[1]], loss.lnorm[[2]][[2]]), col = 2)
@@ -87,6 +89,22 @@ lines(seq(from = 10, to = 250000, by = 50),
               loss.pareto[[2]][[1]], loss.pareto[[2]][[2]]), col = 4)
 legend("topright", legend  = c("Histogram","Lognormal", "Weibull", "Pareto"),
        col = 1:4, lwd = rep(1, 4))
+
+# QQ plot for lnorm, pareto and weibull (for loss data)
+qqplot2(loss$loss,
+        qF = function(p)
+            qlnorm(p, loss.lnorm[[2]][[1]], loss.lnorm[[2]][[2]]),
+        main = "Q-Q Plot")
+
+qqplot2(loss$loss,
+        qF = function(p)
+            qweibull(p, loss.weibull[[2]][[1]], loss.weibull[[2]][[2]]),
+        main = "Q-Q Plot")
+
+qqplot2(loss$loss,
+        qF = function(p)
+            qpareto(p, loss.pareto[[2]][[1]], loss.pareto[[2]][[2]]),
+        main = "Q-Q Plot")
 
 #_________________________ALAE:
 
@@ -108,7 +126,7 @@ alae.pareto <- fitAndTest(sample = loss$alae, limit = rep(-99, nrow(loss)),
 
 # Histogram
 hist(loss$alae, breaks = 200, freq = F, ylim = c(0, 0.0002), xlim = c(0, 40000),
-     main = "Histofram and fitted densities for alae", xlab = "alae")
+     main = "Histogram and fitted densities for alae", xlab = "alae")
 lines(seq(from = 10, to = 501863, by = 50),
       dlnorm(x = seq(from = 10, to = 501863, by = 50),
              alae.lnorm[[2]][[1]], alae.lnorm[[2]][[2]]), col = 2)
@@ -120,6 +138,23 @@ lines(seq(from = 10, to = 501863, by = 50),
               alae.pareto[[2]][[1]], alae.pareto[[2]][[2]]), col = 4)
 legend("topright", legend  = c("Histogram","Lognormal", "Weibull", "Pareto"),
        col = 1:4, lwd = rep(1, 4))
+
+# QQ plot for lnorm, pareto and weibull (for alae data)
+
+qqplot2(loss$alae,
+        qF = function(p)
+            qlnorm(p, alae.lnorm[[2]][[1]], alae.lnorm[[2]][[2]]),
+        main = "Q-Q Plot")
+
+qqplot2(loss$alae,
+        qF = function(p)
+            qweibull(p, alae.weibull[[2]][[1]], alae.weibull[[2]][[2]]),
+        main = "Q-Q Plot")
+
+qqplot2(loss$alae,
+        qF = function(p)
+            qpareto(p, alae.pareto[[2]][[1]], alae.pareto[[2]][[2]]),
+        main = "Q-Q Plot")
 
 #_________________________Empirical cdf:
 loss.ecdf <- ecdf(loss$loss)
@@ -135,8 +170,10 @@ pseudo.sample.non.parametric <- data.frame(loss = loss.ecdf(loss$loss),
                                            alae = alae.ecdf(loss$alae))
 
 par(mfrow = c(1,2))
-plot(pseudo.sample.non.parametric$loss, pseudo.sample.non.parametric$alae)
-plot(pseudo.sample.parametric$loss, pseudo.sample.parametric$alae)
+plot(pseudo.sample.non.parametric$loss, pseudo.sample.non.parametric$alae,
+     xlab = "loss", ylab = "alae", main = "Non-parametric pseudo data")
+plot(pseudo.sample.parametric$loss, pseudo.sample.parametric$alae,
+     xlab = "loss", ylab = "alae", main = "Parametric pseudo data")
 par(mfrow = c(1,1))
 
 # estimatiom tau, rho_s, rho for parametric pseudo data
@@ -193,9 +230,11 @@ copula.mle <- function(sample, copula1, copula2, initial, lower, upper) {
           lower = lower, upper = upper)$par
 }
 
+#___________________________Estimation and simulating___________________________
+
 gumbel.gumbel.coef <- copula.mle(sample = as.matrix(pseudo.sample.parametric), 
                                  copula1 = gumbelCopula, copula2 = gumbelCopula,
-                                 initial = c(0, 1, 1),
+                                 initial = c(0.2, 1.2, 1.2),
                                  lower = c(0, 1, 1), upper = c(1, Inf, Inf))
 
 n <- 10000 # number of observation
@@ -206,13 +245,99 @@ I <- rbinom(n = n, size = 1, prob = p) # Bernoili r.v.
 random <- I * rCopula(n = n, copula = gumbelCopula(param = a, dim = 2)) +
     (1 - I) * rCopula(n = n, copula = gumbelCopula(param = b, dim = 2))
 cor(random[ ,1], random[ ,2], method = "kendall")
+cor(random[ ,1], random[ ,2], method = "spearman")
+cor(random[ ,1], random[ ,2], method = "pearson")
+
+frank.frank.coef <- copula.mle(sample = as.matrix(pseudo.sample.parametric), 
+                                 copula1 = frankCopula, copula2 = frankCopula,
+                                 initial = c(0.2, 1.2, 1.2),
+                                 lower = c(0, 0, 0), upper = c(1, Inf, Inf))
+
+n <- 10000 # number of observation
+p <- frank.frank.coef[1] # mixing parameter
+a <- frank.frank.coef[2] # parameter of 1st copula
+b <- frank.frank.coef[3] # parameter of second copula
+I <- rbinom(n = n, size = 1, prob = p) # Bernoili r.v.
+random <- I * rCopula(n = n, copula = frankCopula(param = a, dim = 2)) +
+    (1 - I) * rCopula(n = n, copula = frankCopula(param = b, dim = 2))
+cor(random[ ,1], random[ ,2], method = "kendall")
+cor(random[ ,1], random[ ,2], method = "spearman")
+cor(random[ ,1], random[ ,2], method = "pearson")
+
+clayton.clayton.coef <- copula.mle(sample = as.matrix(pseudo.sample.parametric), 
+                               copula1 = claytonCopula, copula2 = claytonCopula,
+                               initial = c(0.2, 1.2, 1.2),
+                               lower = c(0, 0, 0), upper = c(1, Inf, Inf))
+
+n <- 10000 # number of observation
+p <- clayton.clayton.coef[1] # mixing parameter
+a <- clayton.clayton.coef[2] # parameter of 1st copula
+b <- clayton.clayton.coef[3] # parameter of second copula
+I <- rbinom(n = n, size = 1, prob = p) # Bernoili r.v.
+random <- I * rCopula(n = n, copula = claytonCopula(param = a, dim = 2)) +
+    (1 - I) * rCopula(n = n, copula = claytonCopula(param = b, dim = 2))
+cor(random[ ,1], random[ ,2], method = "kendall")
+cor(random[ ,1], random[ ,2], method = "spearman")
+cor(random[ ,1], random[ ,2], method = "pearson")
+
+fgm.fgm.coef <- copula.mle(sample = as.matrix(pseudo.sample.parametric), 
+                                   copula1 = fgmCopula, copula2 = fgmCopula,
+                                   initial = c(0.5, 0, 0),
+                                   lower = c(0, -1, -1), upper = c(1, 1, 1))
+
+n <- 10000 # number of observation
+p <- fgm.fgm.coef[1] # mixing parameter
+a <- fgm.fgm.coef[2] # parameter of 1st copula
+b <- fgm.fgm.coef[3] # parameter of second copula
+I <- rbinom(n = n, size = 1, prob = p) # Bernoili r.v.
+random <- I * rCopula(n = n, copula = fgmCopula(param = a, dim = 2)) +
+    (1 - I) * rCopula(n = n, copula = fgmCopula(param = b, dim = 2))
+cor(random[ ,1], random[ ,2], method = "kendall")
+cor(random[ ,1], random[ ,2], method = "spearman")
+cor(random[ ,1], random[ ,2], method = "pearson")
+
+fgm.clayton.coef <- copula.mle(sample = as.matrix(pseudo.sample.parametric), 
+                           copula1 = fgmCopula, copula2 = claytonCopula,
+                           initial = c(0.2, 0.2, 0.2),
+                           lower = c(0, -1, 0), upper = c(1, 1, Inf))
+
+n <- 10000 # number of observation
+p <- fgm.clayton.coef[1] # mixing parameter
+a <- fgm.clayton.coef[2] # parameter of 1st copula
+b <- fgm.clayton.coef[3] # parameter of second copula
+I <- rbinom(n = n, size = 1, prob = p) # Bernoili r.v.
+random <- I * rCopula(n = n, copula = fgmCopula(param = a, dim = 2)) +
+    (1 - I) * rCopula(n = n, copula = claytonCopula(param = b, dim = 2))
+cor(random[ ,1], random[ ,2], method = "kendall")
+cor(random[ ,1], random[ ,2], method = "spearman")
+cor(random[ ,1], random[ ,2], method = "pearson")
+
+gumbel.frank.coef <- copula.mle(sample = as.matrix(pseudo.sample.parametric), 
+                               copula1 = gumbelCopula, copula2 = frankCopula,
+                               initial = c(1, 1.2, 4),
+                               lower = c(0, 1, 0), upper = c(1, Inf, Inf))
+
+n <- 10000 # number of observation
+p <- gumbel.frank.coef[1] # mixing parameter
+a <- gumbel.frank.coef[2] # parameter of 1st copula
+b <- gumbel.frank.coef[3] # parameter of second copula
+I <- rbinom(n = n, size = 1, prob = p) # Bernoili r.v.
+random <- I * rCopula(n = n, copula = gumbelCopula(param = a, dim = 2)) +
+    (1 - I) * rCopula(n = n, copula = frankCopula(param = b, dim = 2))
+cor(random[ ,1], random[ ,2], method = "kendall")
+cor(random[ ,1], random[ ,2], method = "spearman")
+cor(random[ ,1], random[ ,2], method = "pearson")
+
+gumbel.coef <- fitCopula(gumbelCopula(dim = 2), pseudo.sample.parametric,
+                         method = "mpl")
+random <- rCopula(n = n, copula = gumbelCopula(param = gumbel.coef@estimate,
+                                               dim = 2))
+cor(random[ ,1], random[ ,2], method = "kendall")
+cor(random[ ,1], random[ ,2], method = "spearman")
+cor(random[ ,1], random[ ,2], method = "pearson")
+
+
 
 
 ### !!! ecdf gives back value 1, which gives Inf of log likelihood
 ### pseudo.sample.non.parametric[1268,]
-
-# TODO:
-# 1. hist + qqplot
-# 2. ecdf vs lognorm cdf 
-# 3. copula mle
-# 4. calculate tau, Spearman's and Pearson's rho
